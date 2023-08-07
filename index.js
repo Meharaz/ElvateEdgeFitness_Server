@@ -32,7 +32,16 @@ async function run() {
         const instructorCollection = client.db('elevateEdgeDb').collection('instructors');
         const studentReviewCollection = client.db('elevateEdgeDb').collection('studentReview');
         const usersCollection = client.db('elevateEdgeDb').collection('users');
+        const cartCollection = client.db('elevateEdgeDb').collection('carts')
 
+        // cart Collection
+
+        app.post('/carts', async(req, res) => {
+            const item = req.body;
+            console.log(item);
+            const result = await cartCollection.insertOne(item);
+            res.send(result);
+        })
 
 
         // users 
@@ -55,7 +64,34 @@ async function run() {
             res.send(result);
         });
 
+        // make admin
+        app.patch('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
 
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+
+        })
+        // make instructor 
+        app.patch('/users/instructor/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'instructor'
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
 
 
         // instructor information
@@ -81,6 +117,38 @@ async function run() {
             const result = await classesCollection.find().toArray();
             res.send(result);
         })
+        app.get('/approvedClasses', async (req, res) => {
+            const result = await classesCollection.find({ status: 'approved' }).toArray();
+            res.send(result);
+        })
+
+        app.patch('/classes/approved/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: 'approved'
+                },
+            };
+            const result = await classesCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
+        app.delete('/classes/:id', async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) };
+            const result = await classesCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // add Class
+        app.post('/classes', async (req, res) => {
+            const newClass = req.body;
+            const result = await classesCollection.insertOne(newClass);
+            res.send(result);
+        });
+
+
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
